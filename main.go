@@ -31,6 +31,7 @@ func handleRequests(notificationHandler *handlers.NotificationHandler) {
 func main() {
 	var cfg config.Config
 	cfg.ReadFile("config.yml")
+	cfg.ReadEnv()
 
 	db, err := sql.Open("sqlite", cfg.Database.URI)
 	if err != nil {
