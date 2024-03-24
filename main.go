@@ -5,6 +5,7 @@ import (
 	"log"
 	"net/http"
 
+	"github.com/akinolaemmanuel49/notify-api/config"
 	"github.com/akinolaemmanuel49/notify-api/handlers"
 	"github.com/akinolaemmanuel49/notify-api/repositories"
 	"github.com/akinolaemmanuel49/notify-api/services"
@@ -28,7 +29,10 @@ func handleRequests(notificationHandler *handlers.NotificationHandler) {
 }
 
 func main() {
-	db, err := sql.Open("sqlite", "notifications.db")
+	var cfg config.Config
+	cfg.ReadFile("config.yml")
+
+	db, err := sql.Open("sqlite", cfg.Database.URI)
 	if err != nil {
 		log.Fatal("Error connecting to the database:", err)
 	}
