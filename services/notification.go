@@ -38,3 +38,19 @@ func (s *NotificationService) GetAllNotifications(page, pageSize int) ([]*models
 	}
 	return notifications, nil
 }
+
+func (s *NotificationService) UpdateNotificationByID(id int64, fields map[string]interface{}) error {
+	err := s.notificationRepository.UpdateNotificationByID(id, fields)
+	if err != nil {
+		return err
+	}
+	return nil
+}
+
+func (s *NotificationService) DeleteNotificationByID(id int64) error {
+	err := s.notificationRepository.DeleteNotificationByID(id)
+	if err != nil {
+		return err
+	}
+	return nil
+}

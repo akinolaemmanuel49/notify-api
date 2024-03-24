@@ -9,7 +9,7 @@ import (
 )
 
 var (
-	ErrNotExists = errors.New("record does not exist")
+	ErrNotFound = errors.New("record does not exist")
 )
 
 type NotificationRepository struct {
@@ -67,6 +67,9 @@ func (r *NotificationRepository) GetNotificationByID(id int64) (*models.Notifica
 	var notification models.Notification
 	err := result.Scan(&notification.ID, &notification.Title, &notification.Message, &notification.Priority, &notification.CreatedAt)
 	if err != nil {
+		if errors.Is(err, sql.ErrNoRows) {
+			return nil, ErrNotFound
+		}
 		log.Panicln("Error retrieving notification:", err)
 		return nil, err
 	}
@@ -103,4 +106,52 @@ func (r *NotificationRepository) GetAllNotifications(page, pageSize int) ([]*mod
 		return nil, err
 	}
 	return notifications, nil
+}
+
+func (r *NotificationRepository) UpdateNotificationByID(id int64, fields map[string]interface{}) error {
+	_, err := r.GetNotificationByID(id)
+	if errors.Is(err, ErrNotFound) {
+		return ErrNotFound
+	}
+
+	query := `UPDATE notifications SET `
+
+	var params []interface{}
+
+	i := 0
+	for key, value := range fields {
+		if i > 0 {
+			query += ", "
+		}
+		query += key + "= ?"
+		params = append(params, value)
+		i++
+	}
+
+	query += " WHERE id = ?"
+
+	params = append(params, id)
+
+	_, err = r.db.Exec(query, params...)
+	if err != nil {
+		log.Panicln("Error updating notification: ", err)
+	}
+	return err
+}
+
+func (r *NotificationRepository) DeleteNotificationByID(id int64) error {
+	_, err := r.GetNotificationByID(id)
+	if errors.Is(err, ErrNotFound) {
+		return ErrNotFound
+	}
+
+	query := `
+	DELETE FROM notifications WHERE id = ?`
+
+	_, err = r.db.Exec(query, id)
+
+	if err != nil {
+		log.Panicln("Error deleting notification: ", err)
+	}
+	return err
 }

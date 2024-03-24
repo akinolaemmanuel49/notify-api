@@ -15,9 +15,14 @@ import (
 func handleRequests(notificationHandler *handlers.NotificationHandler) {
 	// Define HTTP router
 	router := mux.NewRouter().StrictSlash(true)
-	router.HandleFunc("/notifications", notificationHandler.CreateNotification).Methods("POST")
-	router.HandleFunc("/notifications", notificationHandler.GetAllNotifications).Methods("GET")
-	router.HandleFunc("/notifications/{id}", notificationHandler.GetNotificationByID).Methods("GET")
+	apiRouter := router.PathPrefix("/api").Subrouter()
+
+	apiRouter.HandleFunc("/notifications/healthCheck", notificationHandler.NotificationHealthCheck).Methods("GET")
+	apiRouter.HandleFunc("/notifications", notificationHandler.CreateNotification).Methods("POST")
+	apiRouter.HandleFunc("/notifications", notificationHandler.GetAllNotifications).Methods("GET")
+	apiRouter.HandleFunc("/notifications/{id}", notificationHandler.GetNotificationByID).Methods("GET")
+	apiRouter.HandleFunc("/notifications/{id}", notificationHandler.UpdateNotificationByID).Methods("PUT")
+	apiRouter.HandleFunc("/notifications/{id}", notificationHandler.DeleteNotificationByID).Methods("DELETE")
 
 	log.Fatal(http.ListenAndServe(":8080", router))
 }
