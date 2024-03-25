@@ -10,7 +10,9 @@ import (
 
 type Config struct {
 	Database struct {
-		URI string `yaml:"uri" envconfig:"DATABASE_URI"`
+		USER string `yaml:"user" envconfig:"DB_USER"`
+		PASS string `yaml:"pass" envconfig:"DB_PASS"`
+		NAME string `yaml:"name" envconfig:"DB_NAME"`
 	} `yaml:"database"`
 }
 

@@ -24,7 +24,7 @@ func NewNotificationHandler(notificationService *services.NotificationService) *
 }
 
 func (h *NotificationHandler) NotificationHealthCheck(w http.ResponseWriter, r *http.Request) {
-	fmt.Println("Endpoint Hit: HealthCheck")
+	fmt.Println("Endpoint Hit: Notifications HealthCheck")
 
 	// Set response content type to JSON
 	w.Header().Set("Content-Type", "application/json")
