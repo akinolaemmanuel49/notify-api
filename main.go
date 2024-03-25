@@ -53,7 +53,8 @@ func main() {
 	LoadEnv()
 
 	var cfg config.Config
-	cfg.ReadFile("config.yml")
+	cfg.ReadFile("dev-config.yml") // For use in development
+	// cfg.ReadFile("config.yml")
 	cfg.ReadEnv()
 
 	DATABASE_URI := fmt.Sprintf("postgres://%s:%s@localhost:5432/%s?sslmode=disable", cfg.Database.USER, cfg.Database.PASS, cfg.Database.NAME)
