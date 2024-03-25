@@ -9,8 +9,9 @@ import (
 	"github.com/akinolaemmanuel49/notify-api/handlers"
 	"github.com/akinolaemmanuel49/notify-api/repositories"
 	"github.com/akinolaemmanuel49/notify-api/services"
-	_ "github.com/glebarez/go-sqlite"
 	"github.com/gorilla/mux"
+	"github.com/joho/godotenv"
+	_ "github.com/lib/pq"
 )
 
 func handleRequests(notificationHandler *handlers.NotificationHandler) {
@@ -28,23 +29,27 @@ func handleRequests(notificationHandler *handlers.NotificationHandler) {
 	log.Fatal(http.ListenAndServe(":8080", router))
 }
 
+func LoadEnv() {
+	err := godotenv.Load()
+	if err != nil {
+		log.Fatalln("Error loading .env file")
+	}
+}
 func main() {
+	LoadEnv()
+
 	var cfg config.Config
 	cfg.ReadFile("config.yml")
 	cfg.ReadEnv()
 
-	db, err := sql.Open("sqlite", cfg.Database.URI)
+	db, err := sql.Open("postgres", cfg.Database.URI)
 	if err != nil {
-		log.Fatal("Error connecting to the database:", err)
+		log.Fatalln("Error connecting to the database:", err)
 	}
 	defer db.Close()
 
-	// Migrate notification table
+	// Initialize repositories
 	notificationRepository := repositories.NewNotificationRepository(db)
-	err = notificationRepository.MigrateNotificationTable()
-	if err != nil {
-		log.Fatal("Error migrating notification table:", err)
-	}
 
 	// Initialize services
 	notificationService := services.NewNotificationService(notificationRepository)

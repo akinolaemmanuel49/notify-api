@@ -28,4 +28,5 @@ type Notification struct {
 	Message   string   `json:"message"`
 	Priority  Priority `json:"priority"`
 	CreatedAt string   `json:"createdAt"`
+	UpdatedAt string   `json:"updatedAt"`
 }
