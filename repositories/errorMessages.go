@@ -3,5 +3,6 @@ package repositories
 import "errors"
 
 var (
-	ErrNotFound = errors.New("record does not exist")
+	ErrNotFound           = errors.New("record does not exist")
+	ErrInvalidCredentials = errors.New("invalid credentials")
 )

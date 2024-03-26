@@ -14,6 +14,10 @@ type Config struct {
 		PASS string `yaml:"pass" envconfig:"DB_PASS"`
 		NAME string `yaml:"name" envconfig:"DB_NAME"`
 	} `yaml:"database"`
+	JWT struct {
+		KEY       string `yaml:"key" envconfig:"JWT_KEY"`
+		TOKEN_TTL string `yaml:"tokenTTL" envconfig:"JWT_TOKEN_TTL"`
+	} `yaml:"jwt"`
 }
 
 func processError(err error) {

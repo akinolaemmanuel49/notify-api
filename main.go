@@ -15,13 +15,14 @@ import (
 	_ "github.com/lib/pq"
 )
 
-func handleRequests(notificationHandler *handlers.NotificationHandler, userHandler *handlers.UserHandler) {
+func handleRequests(notificationHandler *handlers.NotificationHandler, userHandler *handlers.UserHandler, authHandler *handlers.AuthHandler) {
 	// Define HTTP router
 	router := mux.NewRouter().StrictSlash(true)
 	apiRouter := router.PathPrefix("/api").Subrouter()
 
 	handleNotificationRequests(apiRouter, notificationHandler)
 	handleUserRequests(apiRouter, userHandler)
+	handleAuthRequest(apiRouter, authHandler)
 
 	log.Fatal(http.ListenAndServe(":8080", router))
 }
@@ -40,7 +41,15 @@ func handleUserRequests(apiRouter *mux.Router, userHandler *handlers.UserHandler
 	// Users
 	apiRouter.HandleFunc("/users/healthCheck", userHandler.UserHealthCheck).Methods("GET")
 	apiRouter.HandleFunc("/users", userHandler.CreateUser).Methods("POST")
+	apiRouter.HandleFunc("/users", userHandler.GetAllUsers).Methods("GET")
+	apiRouter.HandleFunc("/users/{id}", userHandler.GetUserByID).Methods("GET")
+	apiRouter.HandleFunc("/users/{id}", userHandler.UpdateUserByID).Methods("PUT")
+	apiRouter.HandleFunc("/users/{id}", userHandler.DeleteUserByID).Methods("DELETE")
+}
 
+func handleAuthRequest(apiRouter *mux.Router, authHandler *handlers.AuthHandler) {
+	// Auth
+	apiRouter.HandleFunc("/auth/token", authHandler.GenerateToken).Methods("POST")
 }
 
 func LoadEnv() {
@@ -58,7 +67,6 @@ func main() {
 	cfg.ReadEnv()
 
 	DATABASE_URI := fmt.Sprintf("postgres://%s:%s@localhost:5432/%s?sslmode=disable", cfg.Database.USER, cfg.Database.PASS, cfg.Database.NAME)
-	fmt.Println(DATABASE_URI)
 	db, err := sql.Open("postgres", DATABASE_URI)
 	if err != nil {
 		log.Fatalln("Error connecting to the database:", err)
@@ -68,16 +76,19 @@ func main() {
 	// Initialize repositories
 	notificationRepository := repositories.NewNotificationRepository(db)
 	userRepository := repositories.NewUserRepository(db)
+	authRepository := repositories.NewAuthRepository(db)
 
 	// Initialize services
 	notificationService := services.NewNotificationService(notificationRepository)
 	userService := services.NewUserService(userRepository)
+	authService := services.NewAuthService(authRepository)
 
 	// Initialize handlers
 	notificationHandler := handlers.NewNotificationHandler(notificationService)
 	userHandler := handlers.NewUserHandler(userService)
+	authHandler := handlers.NewAuthHandler(authService)
 
 	// Start the server
 	log.Println("Server started on port 8080")
-	handleRequests(notificationHandler, userHandler)
+	handleRequests(notificationHandler, userHandler, authHandler)
 }

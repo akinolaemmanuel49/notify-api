@@ -1,3 +1,4 @@
+-- 000003_add_users_table.up.sql
 CREATE TABLE users (
     id SERIAL PRIMARY KEY,
     first_name TEXT NOT NULL,
