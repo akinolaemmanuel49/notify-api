@@ -8,6 +8,7 @@ import (
 
 	"github.com/akinolaemmanuel49/notify-api/config"
 	"github.com/akinolaemmanuel49/notify-api/handlers"
+	"github.com/akinolaemmanuel49/notify-api/middlewares"
 	"github.com/akinolaemmanuel49/notify-api/repositories"
 	"github.com/akinolaemmanuel49/notify-api/services"
 	"github.com/gorilla/mux"
@@ -30,11 +31,11 @@ func handleRequests(notificationHandler *handlers.NotificationHandler, userHandl
 func handleNotificationRequests(apiRouter *mux.Router, notificationHandler *handlers.NotificationHandler) {
 	// Notification Routes
 	apiRouter.HandleFunc("/notifications/healthCheck", notificationHandler.NotificationHealthCheck).Methods("GET")
-	apiRouter.HandleFunc("/notifications", notificationHandler.CreateNotification).Methods("POST")
+	apiRouter.HandleFunc("/notifications", middlewares.JWTAuthMiddleware(notificationHandler.CreateNotification)).Methods("POST")
 	apiRouter.HandleFunc("/notifications", notificationHandler.GetAllNotifications).Methods("GET")
 	apiRouter.HandleFunc("/notifications/{id}", notificationHandler.GetNotificationByID).Methods("GET")
-	apiRouter.HandleFunc("/notifications/{id}", notificationHandler.UpdateNotificationByID).Methods("PUT")
-	apiRouter.HandleFunc("/notifications/{id}", notificationHandler.DeleteNotificationByID).Methods("DELETE")
+	apiRouter.HandleFunc("/notifications/{id}", middlewares.JWTAuthMiddleware(notificationHandler.UpdateNotificationByID)).Methods("PUT")
+	apiRouter.HandleFunc("/notifications/{id}", middlewares.JWTAuthMiddleware(notificationHandler.DeleteNotificationByID)).Methods("DELETE")
 }
 
 func handleUserRequests(apiRouter *mux.Router, userHandler *handlers.UserHandler) {
@@ -43,8 +44,8 @@ func handleUserRequests(apiRouter *mux.Router, userHandler *handlers.UserHandler
 	apiRouter.HandleFunc("/users", userHandler.CreateUser).Methods("POST")
 	apiRouter.HandleFunc("/users", userHandler.GetAllUsers).Methods("GET")
 	apiRouter.HandleFunc("/users/{id}", userHandler.GetUserByID).Methods("GET")
-	apiRouter.HandleFunc("/users/{id}", userHandler.UpdateUserByID).Methods("PUT")
-	apiRouter.HandleFunc("/users/{id}", userHandler.DeleteUserByID).Methods("DELETE")
+	apiRouter.HandleFunc("/users/{id}", middlewares.JWTAuthMiddleware(userHandler.UpdateUserByID)).Methods("PUT")
+	apiRouter.HandleFunc("/users/{id}", middlewares.JWTAuthMiddleware(userHandler.DeleteUserByID)).Methods("DELETE")
 }
 
 func handleAuthRequest(apiRouter *mux.Router, authHandler *handlers.AuthHandler) {

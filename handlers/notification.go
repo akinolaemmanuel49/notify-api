@@ -10,6 +10,7 @@ import (
 	"github.com/akinolaemmanuel49/notify-api/models"
 	"github.com/akinolaemmanuel49/notify-api/services"
 	"github.com/akinolaemmanuel49/notify-api/utils"
+	"github.com/golang-jwt/jwt/v5"
 	"github.com/gorilla/mux"
 )
 
@@ -36,17 +37,26 @@ func (h *NotificationHandler) NotificationHealthCheck(w http.ResponseWriter, r *
 func (h *NotificationHandler) CreateNotification(w http.ResponseWriter, r *http.Request) {
 	fmt.Println("Endpoint Hit: CreateNotification")
 
-	var notification models.Notification
+	// Extract user ID from JWT token
+	token, err := utils.GetToken(r)
+	if err != nil {
+		utils.RespondWithError(w, "Unauthorized access", http.StatusUnauthorized)
+		return
+	}
+	claims := token.Claims.(jwt.MapClaims)
+	publisherID := int64(claims["id"].(float64))
+
+	var notificationInput models.NotificationInput
 
 	// Check and resolve errors during JSON decoding process
-	err := json.NewDecoder(r.Body).Decode(&notification)
+	err = json.NewDecoder(r.Body).Decode(&notificationInput)
 	if err != nil {
 		http.Error(w, "Failed to parse request body", http.StatusBadRequest)
 		return
 	}
 
 	// Check and resolve errors from the create notification service
-	err = h.notificationService.CreateNotification(&notification)
+	err = h.notificationService.CreateNotification(&notificationInput, publisherID)
 	if err != nil {
 		if errors.Is(err, utils.ErrInvalidRangeForPriority) {
 			utils.RespondWithError(w, err.Error(), http.StatusBadRequest)
@@ -123,13 +133,22 @@ func (h *NotificationHandler) UpdateNotificationByID(w http.ResponseWriter, r *h
 	vars := mux.Vars(r)
 
 	// Convert string to integer
-	id, err := strconv.ParseInt(vars["id"], 10, 64)
+	ID, err := strconv.ParseInt(vars["id"], 10, 64)
 
 	// Check and resolve errors arising from string conversion
 	if err != nil {
 		http.Error(w, "Invalid notification ID", http.StatusBadRequest)
 		return
 	}
+
+	// Extract user ID from JWT token
+	token, err := utils.GetToken(r)
+	if err != nil {
+		utils.RespondWithError(w, "Unauthorized access", http.StatusUnauthorized)
+		return
+	}
+	claims := token.Claims.(jwt.MapClaims)
+	publisherID := int64(claims["id"].(float64))
 
 	var fields map[string]interface{}
 
@@ -140,12 +159,12 @@ func (h *NotificationHandler) UpdateNotificationByID(w http.ResponseWriter, r *h
 		return
 	}
 
-	err = h.notificationService.UpdateNotificationByID(id, fields)
+	err = h.notificationService.UpdateNotificationByID(ID, publisherID, fields)
 
 	// Check and resolve errors from get notification by id service
 	if err != nil {
 		if errors.Is(err, utils.ErrNotFound) {
-			http.Error(w, fmt.Sprintf("Notification with id: %d was not found", id), http.StatusNotFound)
+			http.Error(w, fmt.Sprintf("Notification with id: %d was not found", ID), http.StatusNotFound)
 			return
 		}
 		if errors.Is(err, utils.ErrInvalidTypeForPriority) {
@@ -167,7 +186,7 @@ func (h *NotificationHandler) DeleteNotificationByID(w http.ResponseWriter, r *h
 	vars := mux.Vars(r)
 
 	// Convert string to integer
-	id, err := strconv.ParseInt(vars["id"], 10, 64)
+	ID, err := strconv.ParseInt(vars["id"], 10, 64)
 
 	// Check and resolve errors arising from string conversion
 	if err != nil {
@@ -175,12 +194,21 @@ func (h *NotificationHandler) DeleteNotificationByID(w http.ResponseWriter, r *h
 		return
 	}
 
-	err = h.notificationService.DeleteNotificationByID(id)
+	// Extract user ID from JWT token
+	token, err := utils.GetToken(r)
+	if err != nil {
+		utils.RespondWithError(w, "Unauthorized access", http.StatusUnauthorized)
+		return
+	}
+	claims := token.Claims.(jwt.MapClaims)
+	publisherID := int64(claims["id"].(float64))
+
+	err = h.notificationService.DeleteNotificationByID(ID, publisherID)
 
 	// Check and resolve errors from get notification by id service
 	if err != nil {
 		if errors.Is(err, utils.ErrNotFound) {
-			http.Error(w, fmt.Sprintf("Notification with id: %d was not found", id), http.StatusNotFound)
+			http.Error(w, fmt.Sprintf("Notification with id: %d was not found", ID), http.StatusNotFound)
 			return
 		}
 		http.Error(w, fmt.Sprintf("Failed to retrieve notification: %s", err.Error()), http.StatusInternalServerError)

@@ -70,3 +70,9 @@ type Notification struct {
 	CreatedAt   string   `json:"created_at"`
 	UpdatedAt   string   `json:"updated_at"`
 }
+
+type NotificationInput struct {
+	Title    string   `json:"title"`
+	Message  string   `json:"message"`
+	Priority Priority `json:"priority"`
+}

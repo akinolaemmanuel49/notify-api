@@ -14,6 +14,6 @@ func JWTAuthMiddleware(next http.HandlerFunc) http.HandlerFunc {
 			return
 		}
 
-		next(w, r)
+		next.ServeHTTP(w, r)
 	}
 }

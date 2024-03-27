@@ -1,9 +1,6 @@
 package services
 
 import (
-	"fmt"
-	"reflect"
-
 	"github.com/akinolaemmanuel49/notify-api/models"
 	"github.com/akinolaemmanuel49/notify-api/repositories"
 )
@@ -18,11 +15,11 @@ func NewNotificationService(notificationRepository *repositories.NotificationRep
 	}
 }
 
-func (s *NotificationService) CreateNotification(notification *models.Notification) error {
-	if err := notification.Priority.Validate(); err != nil {
+func (s *NotificationService) CreateNotification(notificationInput *models.NotificationInput, publisherID int64) error {
+	if err := notificationInput.Priority.Validate(); err != nil {
 		return err
 	}
-	err := s.notificationRepository.CreateNotification(notification)
+	err := s.notificationRepository.CreateNotification(notificationInput, publisherID)
 	if err != nil {
 		return err
 	}
@@ -45,8 +42,7 @@ func (s *NotificationService) GetAllNotifications(page, pageSize int) ([]*models
 	return notifications, nil
 }
 
-func (s *NotificationService) UpdateNotificationByID(id int64, fields map[string]interface{}) error {
-	fmt.Println(reflect.TypeOf(fields["priority"]))
+func (s *NotificationService) UpdateNotificationByID(ID, publisherID int64, fields map[string]interface{}) error {
 	if priorityField, ok := fields["priority"]; ok {
 		// Validate priority
 		priority, err := models.PriorityFromField(priorityField)
@@ -58,15 +54,15 @@ func (s *NotificationService) UpdateNotificationByID(id int64, fields map[string
 		}
 		fields["priority"] = priority
 	}
-	err := s.notificationRepository.UpdateNotificationByID(id, fields)
+	err := s.notificationRepository.UpdateNotificationByID(ID, publisherID, fields)
 	if err != nil {
 		return err
 	}
 	return nil
 }
 
-func (s *NotificationService) DeleteNotificationByID(id int64) error {
-	err := s.notificationRepository.DeleteNotificationByID(id)
+func (s *NotificationService) DeleteNotificationByID(ID, publisherID int64) error {
+	err := s.notificationRepository.DeleteNotificationByID(ID, publisherID)
 	if err != nil {
 		return err
 	}
