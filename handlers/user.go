@@ -8,8 +8,8 @@ import (
 	"strconv"
 
 	"github.com/akinolaemmanuel49/notify-api/models"
-	"github.com/akinolaemmanuel49/notify-api/repositories"
 	"github.com/akinolaemmanuel49/notify-api/services"
+	"github.com/akinolaemmanuel49/notify-api/utils"
 	"github.com/gorilla/mux"
 )
 
@@ -70,7 +70,7 @@ func (h *UserHandler) GetUserByID(w http.ResponseWriter, r *http.Request) {
 	}
 
 	user, err := h.userService.GetUserByID(id)
-	if errors.Is(err, repositories.ErrNotFound) {
+	if errors.Is(err, utils.ErrNotFound) {
 		http.Error(w, fmt.Sprintf("User with id: %d was not found", id), http.StatusNotFound)
 		return
 	}
@@ -131,7 +131,7 @@ func (h *UserHandler) UpdateUserByID(w http.ResponseWriter, r *http.Request) {
 
 	// Check and resolve errors from get notification by id service
 	if err != nil {
-		if errors.Is(err, repositories.ErrNotFound) {
+		if errors.Is(err, utils.ErrNotFound) {
 			http.Error(w, fmt.Sprintf("Notification with id: %d was not found", id), http.StatusNotFound)
 			return
 		}
@@ -158,7 +158,7 @@ func (h *UserHandler) DeleteUserByID(w http.ResponseWriter, r *http.Request) {
 
 	// Check and resolve errors from get notification by id service
 	if err != nil {
-		if errors.Is(err, repositories.ErrNotFound) {
+		if errors.Is(err, utils.ErrNotFound) {
 			http.Error(w, fmt.Sprintf("Notification with id: %d was not found", id), http.StatusNotFound)
 			return
 		}

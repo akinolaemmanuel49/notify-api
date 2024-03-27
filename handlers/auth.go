@@ -7,7 +7,6 @@ import (
 	"net/http"
 
 	"github.com/akinolaemmanuel49/notify-api/models"
-	"github.com/akinolaemmanuel49/notify-api/repositories"
 	"github.com/akinolaemmanuel49/notify-api/services"
 	"github.com/akinolaemmanuel49/notify-api/utils"
 )
@@ -35,7 +34,7 @@ func (h *AuthHandler) GenerateToken(w http.ResponseWriter, r *http.Request) {
 
 	ok, ID, err := h.authService.AuthenticateUser(&credentials)
 	if err != nil {
-		if errors.Is(err, repositories.ErrInvalidCredentials) {
+		if errors.Is(err, utils.ErrInvalidCredentials) {
 			utils.RespondWithError(w, "Invalid credentials", http.StatusUnauthorized)
 			return
 		}

@@ -60,7 +60,7 @@ func (r *UserRepository) GetUserByID(id int64) (*models.User, error) {
 	err := result.Scan(&user.ID, &user.FirstName, &user.LastName, &user.Email, &user.PasswordHash, &user.CreatedAt, &user.UpdatedAt)
 	if err != nil {
 		if errors.Is(err, sql.ErrNoRows) {
-			return nil, ErrNotFound
+			return nil, utils.ErrNotFound
 		}
 		log.Panicln("Error retrieving user:", err)
 		return nil, err
@@ -106,8 +106,8 @@ func (r *UserRepository) GetAllUsers(page, pageSize int) ([]*models.User, error)
 // TODO: Exclude password
 func (r *UserRepository) UpdateUserByID(id int64, fields map[string]interface{}) error {
 	_, err := r.GetUserByID(id)
-	if errors.Is(err, ErrNotFound) {
-		return ErrNotFound
+	if errors.Is(err, utils.ErrNotFound) {
+		return utils.ErrNotFound
 	}
 
 	query := "UPDATE users SET "
@@ -118,7 +118,7 @@ func (r *UserRepository) UpdateUserByID(id int64, fields map[string]interface{})
 		if key == "password" {
 			continue
 		}
-		
+
 		if i > 1 {
 			query += ", "
 		}
@@ -139,8 +139,8 @@ func (r *UserRepository) UpdateUserByID(id int64, fields map[string]interface{})
 
 func (r *UserRepository) DeleteUserByID(id int64) error {
 	_, err := r.GetUserByID(id)
-	if errors.Is(err, ErrNotFound) {
-		return ErrNotFound
+	if errors.Is(err, utils.ErrNotFound) {
+		return utils.ErrNotFound
 	}
 
 	query := `

@@ -8,8 +8,8 @@ import (
 	"strconv"
 
 	"github.com/akinolaemmanuel49/notify-api/models"
-	"github.com/akinolaemmanuel49/notify-api/repositories"
 	"github.com/akinolaemmanuel49/notify-api/services"
+	"github.com/akinolaemmanuel49/notify-api/utils"
 	"github.com/gorilla/mux"
 )
 
@@ -48,6 +48,10 @@ func (h *NotificationHandler) CreateNotification(w http.ResponseWriter, r *http.
 	// Check and resolve errors from the create notification service
 	err = h.notificationService.CreateNotification(&notification)
 	if err != nil {
+		if errors.Is(err, utils.ErrInvalidRangeForPriority) {
+			utils.RespondWithError(w, err.Error(), http.StatusBadRequest)
+			return
+		}
 		http.Error(w, fmt.Sprintf("Failed to create notification: %s", err.Error()), http.StatusInternalServerError)
 		return
 	}
@@ -74,7 +78,7 @@ func (h *NotificationHandler) GetNotificationByID(w http.ResponseWriter, r *http
 
 	// Check and resolve errors from get notification by id service
 	if err != nil {
-		if errors.Is(err, repositories.ErrNotFound) {
+		if errors.Is(err, utils.ErrNotFound) {
 			http.Error(w, fmt.Sprintf("Notification with id: %d was not found", id), http.StatusNotFound)
 			return
 		}
@@ -140,8 +144,16 @@ func (h *NotificationHandler) UpdateNotificationByID(w http.ResponseWriter, r *h
 
 	// Check and resolve errors from get notification by id service
 	if err != nil {
-		if errors.Is(err, repositories.ErrNotFound) {
+		if errors.Is(err, utils.ErrNotFound) {
 			http.Error(w, fmt.Sprintf("Notification with id: %d was not found", id), http.StatusNotFound)
+			return
+		}
+		if errors.Is(err, utils.ErrInvalidTypeForPriority) {
+			utils.RespondWithError(w, err.Error(), http.StatusBadRequest)
+			return
+		}
+		if errors.Is(err, utils.ErrInvalidRangeForPriority) {
+			utils.RespondWithError(w, err.Error(), http.StatusBadRequest)
 			return
 		}
 		http.Error(w, fmt.Sprintf("Failed to retrieve notification: %s", err.Error()), http.StatusInternalServerError)
@@ -167,7 +179,7 @@ func (h *NotificationHandler) DeleteNotificationByID(w http.ResponseWriter, r *h
 
 	// Check and resolve errors from get notification by id service
 	if err != nil {
-		if errors.Is(err, repositories.ErrNotFound) {
+		if errors.Is(err, utils.ErrNotFound) {
 			http.Error(w, fmt.Sprintf("Notification with id: %d was not found", id), http.StatusNotFound)
 			return
 		}

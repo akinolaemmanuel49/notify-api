@@ -1,6 +1,9 @@
 package services
 
 import (
+	"fmt"
+	"reflect"
+
 	"github.com/akinolaemmanuel49/notify-api/models"
 	"github.com/akinolaemmanuel49/notify-api/repositories"
 )
@@ -16,6 +19,9 @@ func NewNotificationService(notificationRepository *repositories.NotificationRep
 }
 
 func (s *NotificationService) CreateNotification(notification *models.Notification) error {
+	if err := notification.Priority.Validate(); err != nil {
+		return err
+	}
 	err := s.notificationRepository.CreateNotification(notification)
 	if err != nil {
 		return err
@@ -40,6 +46,18 @@ func (s *NotificationService) GetAllNotifications(page, pageSize int) ([]*models
 }
 
 func (s *NotificationService) UpdateNotificationByID(id int64, fields map[string]interface{}) error {
+	fmt.Println(reflect.TypeOf(fields["priority"]))
+	if priorityField, ok := fields["priority"]; ok {
+		// Validate priority
+		priority, err := models.PriorityFromField(priorityField)
+		if err != nil {
+			return err
+		}
+		if err := priority.Validate(); err != nil {
+			return err
+		}
+		fields["priority"] = priority
+	}
 	err := s.notificationRepository.UpdateNotificationByID(id, fields)
 	if err != nil {
 		return err
