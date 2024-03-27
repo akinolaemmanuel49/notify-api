@@ -15,15 +15,23 @@ func NewUserService(userRepository *repositories.UserRepository) *UserService {
 	}
 }
 
-func (s *UserService) CreateUser(user *models.User) error {
-	err := s.userRepository.CreateUser(user)
+func (s *UserService) CreateUser(userInputWithPassword *models.UserInputWithPassword) error {
+	userInput := models.UserInput{
+		FirstName: userInputWithPassword.FirstName,
+		LastName:  userInputWithPassword.LastName,
+		Email:     userInputWithPassword.Email,
+	}
+
+	password := userInputWithPassword.Password
+
+	err := s.userRepository.CreateUser(&userInput, password)
 	if err != nil {
 		return err
 	}
 	return nil
 }
 
-func (s *UserService) GetUserByID(id int64) (*models.User, error) {
+func (s *UserService) GetUserByID(id int64) (*models.UserProfile, error) {
 	user, err := s.userRepository.GetUserByID(id)
 	if err != nil {
 		return nil, err
@@ -31,7 +39,7 @@ func (s *UserService) GetUserByID(id int64) (*models.User, error) {
 	return user, nil
 }
 
-func (s *UserService) GetAllUsers(page, pageSize int) ([]*models.User, error) {
+func (s *UserService) GetAllUsers(page, pageSize int) ([]*models.UserProfile, error) {
 	users, err := s.userRepository.GetAllUsers(page, pageSize)
 	if err != nil {
 		return nil, err

@@ -36,17 +36,21 @@ func (h *UserHandler) UserHealthCheck(w http.ResponseWriter, r *http.Request) {
 func (h *UserHandler) CreateUser(w http.ResponseWriter, r *http.Request) {
 	fmt.Println("Endpoint Hit: CreateUser")
 
-	var user models.User
+	var userInputWithPassword models.UserInputWithPassword
 
 	// Check and resolve errors during JSON decoding process
-	err := json.NewDecoder(r.Body).Decode(&user)
+	err := json.NewDecoder(r.Body).Decode(&userInputWithPassword)
 	if err != nil {
 		http.Error(w, "Failed to parse request body", http.StatusBadRequest)
 		return
 	}
 
 	// Check and resolve errors from the create user service
-	err = h.userService.CreateUser(&user)
+	err = h.userService.CreateUser(&userInputWithPassword)
+	if errors.Is(err, utils.ErrDuplicateKey) {
+		utils.RespondWithError(w, "Email address already in use", http.StatusConflict)
+		return
+	}
 	if err != nil {
 		http.Error(w, fmt.Sprintf("Failed to create user: %s", err.Error()), http.StatusInternalServerError)
 		return
@@ -62,16 +66,16 @@ func (h *UserHandler) GetUserByID(w http.ResponseWriter, r *http.Request) {
 	vars := mux.Vars(r)
 
 	// Convert string to integer
-	id, err := strconv.ParseInt(vars["id"], 10, 64)
+	ID, err := strconv.ParseInt(vars["id"], 10, 64)
 
 	if err != nil {
 		http.Error(w, "invalid user ID", http.StatusBadRequest)
 		return
 	}
 
-	user, err := h.userService.GetUserByID(id)
+	user, err := h.userService.GetUserByID(ID)
 	if errors.Is(err, utils.ErrNotFound) {
-		http.Error(w, fmt.Sprintf("User with id: %d was not found", id), http.StatusNotFound)
+		http.Error(w, fmt.Sprintf("User with ID: %d was not found", ID), http.StatusNotFound)
 		return
 	}
 	if err != nil {
@@ -110,7 +114,7 @@ func (h *UserHandler) UpdateUserByID(w http.ResponseWriter, r *http.Request) {
 	vars := mux.Vars(r)
 
 	// Convert string to integer
-	id, err := strconv.ParseInt(vars["id"], 10, 64)
+	ID, err := strconv.ParseInt(vars["id"], 10, 64)
 
 	// Check and resolve errors arising from string conversion
 	if err != nil {
@@ -127,12 +131,12 @@ func (h *UserHandler) UpdateUserByID(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	err = h.userService.UpdateUserByID(id, fields)
+	err = h.userService.UpdateUserByID(ID, fields)
 
-	// Check and resolve errors from get notification by id service
+	// Check and resolve errors from get notification by ID service
 	if err != nil {
 		if errors.Is(err, utils.ErrNotFound) {
-			http.Error(w, fmt.Sprintf("Notification with id: %d was not found", id), http.StatusNotFound)
+			http.Error(w, fmt.Sprintf("Notification with ID: %d was not found", ID), http.StatusNotFound)
 			return
 		}
 		http.Error(w, fmt.Sprintf("Failed to retrieve notification: %s", err.Error()), http.StatusInternalServerError)
@@ -146,7 +150,7 @@ func (h *UserHandler) DeleteUserByID(w http.ResponseWriter, r *http.Request) {
 	vars := mux.Vars(r)
 
 	// Convert string to integer
-	id, err := strconv.ParseInt(vars["id"], 10, 64)
+	ID, err := strconv.ParseInt(vars["id"], 10, 64)
 
 	// Check and resolve errors arising from string conversion
 	if err != nil {
@@ -154,12 +158,12 @@ func (h *UserHandler) DeleteUserByID(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	err = h.userService.DeleteUserByID(id)
+	err = h.userService.DeleteUserByID(ID)
 
 	// Check and resolve errors from get notification by id service
 	if err != nil {
 		if errors.Is(err, utils.ErrNotFound) {
-			http.Error(w, fmt.Sprintf("Notification with id: %d was not found", id), http.StatusNotFound)
+			http.Error(w, fmt.Sprintf("Notification with ID: %d was not found", ID), http.StatusNotFound)
 			return
 		}
 		http.Error(w, fmt.Sprintf("Failed to retrieve notification: %s", err.Error()), http.StatusInternalServerError)

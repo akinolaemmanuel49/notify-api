@@ -3,7 +3,6 @@ package repositories
 import (
 	"database/sql"
 	"errors"
-	"fmt"
 	"log"
 	"strconv"
 	"time"
@@ -143,8 +142,6 @@ func (r *NotificationRepository) UpdateNotificationByID(ID, publisherID int64, f
 	query += ", updated_at = $" + strconv.Itoa(i)
 	query += " WHERE id = $" + strconv.Itoa(i+1)
 	query += " AND publisher_id = $" + strconv.Itoa(i+2)
-
-	fmt.Println(query)
 
 	updatedAt := time.Now().UTC().Format(time.RFC3339)
 	params = append(params, updatedAt, ID, publisherID)
