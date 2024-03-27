@@ -12,12 +12,16 @@ import (
 )
 
 func GenerateJWT(ID int64) (string, error) {
+	LoadEnv()
 
-	tokenTTL, _ := strconv.Atoi(cfg.JWT.TOKEN_TTL)
+	cfg.ReadFile("dev-config.yml") // For use in development
+	cfg.ReadEnv()
+
+	tokenTTL, _ := strconv.Atoi(cfg.JWT.Token_TTL)
 	token := jwt.NewWithClaims(jwt.SigningMethodHS256, jwt.MapClaims{
 		"id":  ID,
 		"iat": time.Now().Unix(),
-		"eat": time.Now().Add(time.Second * time.Duration(tokenTTL)).Unix(),
+		"exp": time.Now().Add(time.Second * time.Duration(tokenTTL)).Unix(),
 	})
 	return token.SignedString(privateKey)
 }

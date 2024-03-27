@@ -10,18 +10,22 @@ import (
 
 type Config struct {
 	Database struct {
-		USER string `yaml:"user" envconfig:"DB_USER"`
-		PASS string `yaml:"pass" envconfig:"DB_PASS"`
-		NAME string `yaml:"name" envconfig:"DB_NAME"`
+		User string `yaml:"user" envconfig:"DB_USER"`
+		Pass string `yaml:"pass" envconfig:"DB_PASS"`
+		Name string `yaml:"name" envconfig:"DB_NAME"`
 	} `yaml:"database"`
 	JWT struct {
-		KEY       string `yaml:"key" envconfig:"JWT_KEY"`
-		TOKEN_TTL string `yaml:"tokenTTL" envconfig:"JWT_TOKEN_TTL"`
+		Key       string `yaml:"key" envconfig:"JWT_KEY"`
+		Token_TTL string `yaml:"tokenTTL" envconfig:"JWT_TOKEN_TTL"`
 	} `yaml:"jwt"`
+	RateLimiting struct {
+		MaxRequests string `yaml:"maxRequests" envconfig:"MAX_REQUESTS"`
+		Duration    string `yaml:"duration" envconfig:"REQUEST_LIMIT_DURATION"`
+	} `yaml:"rateLimiting"`
 }
 
 func processError(err error) {
-	log.Fatalln(err)
+	log.Println(err)
 }
 func (cfg *Config) ReadFile(file string) {
 	f, err := os.Open(file)

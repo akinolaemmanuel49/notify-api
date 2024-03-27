@@ -27,7 +27,7 @@ func (r *UserRepository) CreateUser(userInput *models.UserInput, password string
 	currentTime := time.Now().UTC().Format(time.RFC3339)
 	hashedPassword, err := utils.GenerateHashPassword(password)
 	if err != nil {
-		log.Panicln("An error occured while hashing password:", err)
+		log.Println("An error occured while hashing password:", err)
 	}
 
 	user := models.User{
@@ -55,7 +55,7 @@ func (r *UserRepository) CreateUser(userInput *models.UserInput, password string
 				return utils.ErrDuplicateKey
 			}
 		}
-		log.Panicln("Error inserting user:", err)
+		log.Println("Error inserting user:", err)
 	}
 	return err
 }
@@ -75,7 +75,7 @@ func (r *UserRepository) GetUserByID(id int64) (*models.UserProfile, error) {
 		if errors.Is(err, sql.ErrNoRows) {
 			return nil, utils.ErrNotFound
 		}
-		log.Panicln("Error retrieving user:", err)
+		log.Println("Error retrieving user:", err)
 		return nil, err
 	}
 	return &userProfile, nil
@@ -94,7 +94,7 @@ func (r *UserRepository) GetAllUsers(page, pageSize int) ([]*models.UserProfile,
 	OFFSET $2`
 	results, err := r.db.Query(query, pageSize, offset)
 	if err != nil {
-		log.Panicln("Error retrieving users:", err)
+		log.Println("Error retrieving users:", err)
 		return nil, err
 	}
 	defer results.Close()
@@ -104,13 +104,13 @@ func (r *UserRepository) GetAllUsers(page, pageSize int) ([]*models.UserProfile,
 		var userProfile models.UserProfile
 		err := results.Scan(&userProfile.ID, &userProfile.FirstName, &userProfile.LastName, &userProfile.Email, &userProfile.CreatedAt, &userProfile.UpdatedAt)
 		if err != nil {
-			log.Panicln("Error scanning user row:", err)
+			log.Println("Error scanning user row:", err)
 			return nil, err
 		}
 		userProfiles = append(userProfiles, &userProfile)
 	}
 	if err := results.Err(); err != nil {
-		log.Panicln("Error iterating over user rows:", err)
+		log.Println("Error iterating over user rows:", err)
 		return nil, err
 	}
 	return userProfiles, nil
@@ -147,7 +147,7 @@ func (r *UserRepository) UpdateUserByID(id int64, fields map[string]interface{})
 
 	_, err = r.db.Exec(query, params...)
 	if err != nil {
-		log.Panicln("Error updating notification: ", err)
+		log.Println("Error updating notification: ", err)
 	}
 	return err
 }
@@ -164,7 +164,7 @@ func (r *UserRepository) DeleteUserByID(id int64) error {
 	_, err = r.db.Exec(query, id)
 
 	if err != nil {
-		log.Panicln("Error deleting notification: ", err)
+		log.Println("Error deleting notification: ", err)
 	}
 	return err
 }

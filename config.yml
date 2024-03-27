@@ -1,6 +1,10 @@
 database:
-  user: "database-username"
-  pass: "database-password"
-  name: "database-name"
+  user: <database-username>
+  pass: <database-password>
+  name: <database-name>
 jwt:
-  key: "jwt-secret-key"
+  key: <jwt-secret-key>
+  tokenTTL: <string>
+rateLimiting:
+  maxRequests: <string>
+  duration: <string>

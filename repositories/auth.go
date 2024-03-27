@@ -35,7 +35,7 @@ func (r *AuthRepository) AuthenticateUser(credentials *models.AuthCredentials) (
 		if errors.Is(err, sql.ErrNoRows) {
 			return false, 0, utils.ErrNotFound
 		}
-		log.Panicln("Error authenticating user:", err)
+		log.Println("Error authenticating user:", err)
 		return false, 0, err
 	}
 	if utils.VerifyPassword(passwordHash, credentials.Password) {

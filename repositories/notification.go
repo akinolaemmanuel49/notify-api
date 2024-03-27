@@ -53,7 +53,7 @@ func (r *NotificationRepository) CreateNotification(notificationInput *models.No
 		notification.UpdatedAt)
 
 	if err != nil {
-		log.Panicln("Error inserting notification:", err)
+		log.Println("Error inserting notification:", err)
 	}
 	return err
 }
@@ -79,7 +79,7 @@ func (r *NotificationRepository) GetNotificationByID(id int64) (*models.Notifica
 		if errors.Is(err, sql.ErrNoRows) {
 			return nil, utils.ErrNotFound
 		}
-		log.Panicln("Error retrieving notification:", err)
+		log.Println("Error retrieving notification:", err)
 		return nil, err
 	}
 	return &notification, nil
@@ -95,7 +95,7 @@ func (r *NotificationRepository) GetAllNotifications(page, pageSize int) ([]*mod
 	SELECT id, title, message, priority, publisher_id, created_at, updated_at FROM notifications LIMIT $1 OFFSET $2`
 	results, err := r.db.Query(query, pageSize, offset)
 	if err != nil {
-		log.Panicln("Error retrieving notifications:", err)
+		log.Println("Error retrieving notifications:", err)
 		return nil, err
 	}
 	defer results.Close()
@@ -105,13 +105,13 @@ func (r *NotificationRepository) GetAllNotifications(page, pageSize int) ([]*mod
 		var notification models.Notification
 		err := results.Scan(&notification.ID, &notification.Title, &notification.Message, &notification.Priority, &notification.PublisherID, &notification.CreatedAt, &notification.UpdatedAt)
 		if err != nil {
-			log.Panicln("Error scanning notification row:", err)
+			log.Println("Error scanning notification row:", err)
 			return nil, err
 		}
 		notifications = append(notifications, &notification)
 	}
 	if err := results.Err(); err != nil {
-		log.Panicln("Error iterating over notification rows:", err)
+		log.Println("Error iterating over notification rows:", err)
 		return nil, err
 	}
 	return notifications, nil
@@ -148,7 +148,7 @@ func (r *NotificationRepository) UpdateNotificationByID(ID, publisherID int64, f
 
 	_, err = r.db.Exec(query, params...)
 	if err != nil {
-		log.Panicln("Error updating notification: ", err)
+		log.Println("Error updating notification: ", err)
 	}
 	return err
 }
@@ -165,7 +165,7 @@ func (r *NotificationRepository) DeleteNotificationByID(ID, publisherID int64) e
 	_, err = r.db.Exec(query, ID, publisherID)
 
 	if err != nil {
-		log.Panicln("Error deleting notification: ", err)
+		log.Println("Error deleting notification: ", err)
 	}
 	return err
 }

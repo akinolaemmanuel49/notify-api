@@ -11,8 +11,8 @@ import (
 	"github.com/akinolaemmanuel49/notify-api/middlewares"
 	"github.com/akinolaemmanuel49/notify-api/repositories"
 	"github.com/akinolaemmanuel49/notify-api/services"
+	"github.com/akinolaemmanuel49/notify-api/utils"
 	"github.com/gorilla/mux"
-	"github.com/joho/godotenv"
 	_ "github.com/lib/pq"
 )
 
@@ -20,6 +20,8 @@ func handleRequests(notificationHandler *handlers.NotificationHandler, userHandl
 	// Define HTTP router
 	router := mux.NewRouter().StrictSlash(true)
 	apiRouter := router.PathPrefix("/api").Subrouter()
+
+	apiRouter.Use(middlewares.RateLimitMiddleware)
 
 	handleNotificationRequests(apiRouter, notificationHandler)
 	handleUserRequests(apiRouter, userHandler)
@@ -53,24 +55,19 @@ func handleAuthRequest(apiRouter *mux.Router, authHandler *handlers.AuthHandler)
 	apiRouter.HandleFunc("/auth/token", authHandler.GenerateToken).Methods("POST")
 }
 
-func LoadEnv() {
-	err := godotenv.Load()
-	if err != nil {
-		log.Fatalln("Error loading .env file")
-	}
-}
 func main() {
-	LoadEnv()
+	utils.LoadEnv()
 
 	var cfg config.Config
 	cfg.ReadFile("dev-config.yml") // For use in development
-	// cfg.ReadFile("config.yml")
 	cfg.ReadEnv()
 
-	DATABASE_URI := fmt.Sprintf("postgres://%s:%s@localhost:5432/%s?sslmode=disable", cfg.Database.USER, cfg.Database.PASS, cfg.Database.NAME)
+	DATABASE_URI := fmt.Sprintf(
+		"postgres://%s:%s@localhost:5432/%s?sslmode=disable",
+		cfg.Database.User, cfg.Database.Pass, cfg.Database.Name)
 	db, err := sql.Open("postgres", DATABASE_URI)
 	if err != nil {
-		log.Fatalln("Error connecting to the database:", err)
+		log.Println("Error connecting to the database:", err)
 	}
 	defer db.Close()
 
