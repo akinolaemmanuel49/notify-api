@@ -43,6 +43,28 @@ type NotificationInput struct {
 }
 ```
 
+##### NotificationResponse
+```go
+type NotificationResponse struct {
+	Code    int         `json:"code"`
+	Data    interface{} `json:"data,omitempty"`
+	Message string      `json:"message,omitempty"`
+}
+```
+
+##### User
+```go
+type User struct {
+	ID           int64  `json:"id"`
+	FirstName    string `json:"first_name"`
+	LastName     string `json:"last_name"`
+	Email        string `json:"email"`
+	PasswordHash string `json:"password"`
+	CreatedAt    string `json:"created_at"`
+	UpdatedAt    string `json:"updated_at"`
+}
+```
+
 ##### UserProfile
 ```go
 type UserProfile struct {
@@ -52,6 +74,15 @@ type UserProfile struct {
     Email     string `json:"email"`
     CreatedAt string `json:"created_at"`
     UpdatedAt string `json:"updated_at"`
+}
+```
+
+##### UserInput
+```go
+type UserInput struct {
+	FirstName string `json:"first_name"`
+	LastName  string `json:"last_name"`
+	Email     string `json:"email"`
 }
 ```
 
@@ -65,6 +96,15 @@ type UserInputWithPassword struct {
 }
 ```
 
+##### UserResponse
+```go
+type UserResponse struct {
+	Code    int         `json:"code"`
+	Data    interface{} `json:"data,omitempty"`
+	Message string      `json:"message,omitempty"`
+}
+```
+
 #### Endpoints
 
 ##### 1. Authentication
@@ -75,6 +115,12 @@ type UserInputWithPassword struct {
 - **Description:** Generates a JWT token for authentication.
 - **Request Body:** AuthCredentials
 - **Access:** Unprotected
+- **Sample Response:**
+    ```json
+    {
+	"token": <token>
+    }
+    ```
 
 ##### 2. User Management
 
@@ -84,12 +130,34 @@ type UserInputWithPassword struct {
 - **Description:** Creates a new user.
 - **Request Body:** UserInputWithPassword
 - **Access:** Unprotected
+- **Sample Response:**
+    ```json
+    {
+	"code": 201,
+	"message": "User was successfully created"
+    }
+    ```
 
 ###### Get User By ID
 - **Endpoint:** `/users/{userId}`
 - **Method:** GET
 - **Description:** Retrieves user information by ID.
 - **Access:** Unprotected
+- **Sample Response:**
+    ```json
+    {
+        "code": 200,
+        "data": {
+            "id": 2,
+            "first_name": "John",
+            "last_name": "Doe",
+            "email": "johndoe@mail.com",
+            "created_at": "2024-03-26T20:43:55+01:00",
+            "updated_at": "2024-03-26T20:43:55+01:00"
+        },
+        "message": "User with ID: 2 was successfully retrieved"
+    }
+    ```
 
 ###### Update User
 - **Endpoint:** `/users/{userId}`
@@ -118,12 +186,36 @@ type UserInputWithPassword struct {
 - **Description:** Creates a new notification.
 - **Request Body:** NotificationInput
 - **Access:** Protected
+- **Sample Response:**
+    ```json
+    {
+	"code": 201,
+	"message": "Notification was successfully created"
+    }
+    ```
+
 
 ###### Get Notification By ID
 - **Endpoint:** `/notifications/{notificationId}`
 - **Method:** GET
 - **Description:** Retrieves a notification by ID.
 - **Access:** Unprotected
+- **Sample Response:**
+    ```json
+    {
+        "code": 200,
+        "data": {
+            "id": 2,
+            "title": "New Notification Title 2",
+            "message": "This is a sample notification message 2.",
+            "priority": 2,
+            "publisher_id": 1,
+            "created_at": "2024-03-26T10:00:00+01:00",
+            "updated_at": "2024-03-29T16:56:21+01:00"
+        },
+        "message": "Notification with ID: 2 was successfully retrieved"
+    }
+    ```
 
 ###### Update Notification
 - **Endpoint:** `/notifications/{notificationId}`
@@ -131,18 +223,76 @@ type UserInputWithPassword struct {
 - **Description:** Updates a notification.
 - **Request Body:** NotificationInput
 - **Access:** Protected (only the publisher can update their own notification)
+- **Request Headers:**
+    ```http
+    Authorization: Bearer <token>
+    Content-Type: application/json
+    ```
+- **Sample Response:**
+    ```json
+    {
+        "code": 200,
+        "message": "Notification with ID: 2 was successfully updated"
+    }
+    ```
 
 ###### Delete Notification
 - **Endpoint:** `/notifications/{notificationId}`
 - **Method:** DELETE
 - **Description:** Deletes a notification.
 - **Access:** Protected (only the publisher can delete their own notification)
+- **Sample Response:**
+    ```json
+    {
+        "code": 200,
+        "message": "Notification with ID: 2 was successfully deleted"
+    }
+    ```
 
 ###### Get All Notifications
 - **Endpoint:** `/notifications`
 - **Method:** GET
 - **Description:** Retrieves all notifications.
 - **Access:** Unprotected
+- **Query Parameters:**
+  - `page` (optional): Specifies the page number for pagination. Default is 1.
+  - `pageSize` (optional): Specifies the number of notifications per page. Default is 10.
+- **Sample Response:**
+    ```json
+    {
+	"code": 200,
+	"data": [
+		{
+			"id": 4,
+			"title": "New Notification Title 4",
+			"message": "This is a sample notification message 4.",
+			"priority": 1,
+			"publisher_id": 1,
+			"created_at": "2024-03-26T10:00:00+01:00",
+			"updated_at": "2024-03-26T10:00:00+01:00"
+		},
+		{
+			"id": 3,
+			"title": "New Notification Title 3",
+			"message": "This is a sample notification message 3.",
+			"priority": 1,
+			"publisher_id": 1,
+			"created_at": "2024-03-26T10:00:00+01:00",
+			"updated_at": "2024-03-26T10:00:00+01:00"
+		},
+		{
+			"id": 6,
+			"title": "John's Post.",
+			"message": "This post is by John Doe.",
+			"priority": 1,
+			"publisher_id": 2,
+			"created_at": "2024-03-27T12:38:24+01:00",
+			"updated_at": "2024-03-27T12:39:10+01:00"
+		}
+	],
+	"message": "Notifications successfully retrieved."
+    }
+    ```
 
 #### Error Handling
 - The API follows standard HTTP status codes for error handling.
