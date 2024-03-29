@@ -76,3 +76,9 @@ type NotificationInput struct {
 	Message  string   `json:"message"`
 	Priority Priority `json:"priority"`
 }
+
+type NotificationResponse struct {
+	Code    int         `json:"code"`
+	Data    interface{} `json:"data,omitempty"`
+	Message string      `json:"message,omitempty"`
+}

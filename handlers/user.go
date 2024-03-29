@@ -10,6 +10,7 @@ import (
 	"github.com/akinolaemmanuel49/notify-api/models"
 	"github.com/akinolaemmanuel49/notify-api/services"
 	"github.com/akinolaemmanuel49/notify-api/utils"
+	"github.com/golang-jwt/jwt/v5"
 	"github.com/gorilla/mux"
 )
 
@@ -41,23 +42,29 @@ func (h *UserHandler) CreateUser(w http.ResponseWriter, r *http.Request) {
 	// Check and resolve errors during JSON decoding process
 	err := json.NewDecoder(r.Body).Decode(&userInputWithPassword)
 	if err != nil {
-		http.Error(w, "Failed to parse request body", http.StatusBadRequest)
+		utils.RespondWithError(w, "Error: failed to parse request body", http.StatusBadRequest)
 		return
 	}
 
 	// Check and resolve errors from the create user service
 	err = h.userService.CreateUser(&userInputWithPassword)
 	if errors.Is(err, utils.ErrDuplicateKey) {
-		utils.RespondWithError(w, "Email address already in use", http.StatusConflict)
+		utils.RespondWithError(w, "Error: email address already in use", http.StatusConflict)
 		return
 	}
 	if err != nil {
-		http.Error(w, fmt.Sprintf("Failed to create user: %s", err.Error()), http.StatusInternalServerError)
+		utils.RespondWithError(w, fmt.Sprintf("Error: %s", err.Error()), http.StatusInternalServerError)
 		return
+	}
+
+	response := models.UserResponse{
+		Code:    http.StatusCreated,
+		Message: "User was successfully created",
 	}
 
 	// Write response header
 	w.WriteHeader(http.StatusCreated)
+	json.NewEncoder(w).Encode(response)
 }
 
 func (h *UserHandler) GetUserByID(w http.ResponseWriter, r *http.Request) {
@@ -69,21 +76,27 @@ func (h *UserHandler) GetUserByID(w http.ResponseWriter, r *http.Request) {
 	ID, err := strconv.ParseInt(vars["id"], 10, 64)
 
 	if err != nil {
-		http.Error(w, "invalid user ID", http.StatusBadRequest)
+		utils.RespondWithError(w, "invalid user ID", http.StatusBadRequest)
 		return
 	}
 
 	user, err := h.userService.GetUserByID(ID)
 	if errors.Is(err, utils.ErrNotFound) {
-		http.Error(w, fmt.Sprintf("User with ID: %d was not found", ID), http.StatusNotFound)
+		utils.RespondWithError(w, fmt.Sprintf("Error: user with ID: %d was not found", ID), http.StatusNotFound)
 		return
 	}
 	if err != nil {
-		http.Error(w, fmt.Sprintf("Failed to retrieve user: %s", err.Error()), http.StatusInternalServerError)
+		utils.RespondWithError(w, fmt.Sprintf("Error: %s", err.Error()), http.StatusInternalServerError)
 		return
 	}
+	response := models.UserResponse{
+		Code:    http.StatusOK,
+		Data:    user,
+		Message: fmt.Sprintf("User with ID: %d was successfully retrieved", ID),
+	}
 
-	json.NewEncoder(w).Encode(user)
+	// Encode and write JSON response
+	json.NewEncoder(w).Encode(response)
 }
 
 func (h *UserHandler) GetAllUsers(w http.ResponseWriter, r *http.Request) {
@@ -101,11 +114,18 @@ func (h *UserHandler) GetAllUsers(w http.ResponseWriter, r *http.Request) {
 	users, err := h.userService.GetAllUsers(page, pageSize)
 
 	if err != nil {
-		http.Error(w, fmt.Sprintf("Failed to retrieve users: %s", err.Error()), http.StatusInternalServerError)
+		utils.RespondWithError(w, fmt.Sprintf("Error: %s", err.Error()), http.StatusInternalServerError)
 		return
 	}
 
-	json.NewEncoder(w).Encode(users)
+	response := models.UserResponse{
+		Code:    http.StatusOK,
+		Data:    users,
+		Message: "Users successfully retrieved",
+	}
+
+	// Encode and write JSON response
+	json.NewEncoder(w).Encode(response)
 }
 
 func (h *UserHandler) UpdateUserByID(w http.ResponseWriter, r *http.Request) {
@@ -118,30 +138,51 @@ func (h *UserHandler) UpdateUserByID(w http.ResponseWriter, r *http.Request) {
 
 	// Check and resolve errors arising from string conversion
 	if err != nil {
-		http.Error(w, "Invalid user ID", http.StatusBadRequest)
+		utils.RespondWithError(w, "Error: invalid user ID", http.StatusBadRequest)
 		return
 	}
+
+	// Extract user ID from JWT token
+	token, err := utils.GetToken(r)
+	if err != nil {
+		utils.RespondWithError(w, "Error: unauthorized access", http.StatusUnauthorized)
+		return
+	}
+	claims := token.Claims.(jwt.MapClaims)
+	claimsID := int64(claims["id"].(float64))
 
 	var fields map[string]interface{}
 
 	// Check and resolve errors during JSON decoding process
 	err = json.NewDecoder(r.Body).Decode(&fields)
 	if err != nil {
-		http.Error(w, "Failed to parse request body", http.StatusBadRequest)
+		utils.RespondWithError(w, "Error: failed to parse request body", http.StatusBadRequest)
 		return
 	}
 
-	err = h.userService.UpdateUserByID(ID, fields)
+	err = h.userService.UpdateUserByID(ID, claimsID, fields)
 
 	// Check and resolve errors from get notification by ID service
 	if err != nil {
-		if errors.Is(err, utils.ErrNotFound) {
-			http.Error(w, fmt.Sprintf("Notification with ID: %d was not found", ID), http.StatusNotFound)
+		if errors.Is(err, utils.ErrForbidden) {
+			utils.RespondWithError(w, fmt.Sprintf("Error: %s", err.Error()), http.StatusForbidden)
 			return
 		}
-		http.Error(w, fmt.Sprintf("Failed to retrieve notification: %s", err.Error()), http.StatusInternalServerError)
+		if errors.Is(err, utils.ErrNotFound) {
+			utils.RespondWithError(w, fmt.Sprintf("Error: notification with ID: %d was not found", ID), http.StatusNotFound)
+			return
+		}
+		utils.RespondWithError(w, fmt.Sprintf("Error: %s", err.Error()), http.StatusInternalServerError)
 		return
 	}
+
+	response := models.UserResponse{
+		Code:    http.StatusOK,
+		Message: fmt.Sprintf("User with ID: %d was successfully updated", ID),
+	}
+
+	// Encode and write JSON response
+	json.NewEncoder(w).Encode(response)
 }
 
 func (h *UserHandler) DeleteUserByID(w http.ResponseWriter, r *http.Request) {
@@ -154,19 +195,40 @@ func (h *UserHandler) DeleteUserByID(w http.ResponseWriter, r *http.Request) {
 
 	// Check and resolve errors arising from string conversion
 	if err != nil {
-		http.Error(w, "Invalid user ID", http.StatusBadRequest)
+		utils.RespondWithError(w, "Error: invalid user ID", http.StatusBadRequest)
 		return
 	}
 
-	err = h.userService.DeleteUserByID(ID)
+	// Extract user ID from JWT token
+	token, err := utils.GetToken(r)
+	if err != nil {
+		utils.RespondWithError(w, "Error: unauthorized access", http.StatusUnauthorized)
+		return
+	}
+	claims := token.Claims.(jwt.MapClaims)
+	claimsID := int64(claims["id"].(float64))
+
+	err = h.userService.DeleteUserByID(ID, claimsID)
 
 	// Check and resolve errors from get notification by id service
 	if err != nil {
-		if errors.Is(err, utils.ErrNotFound) {
-			http.Error(w, fmt.Sprintf("Notification with ID: %d was not found", ID), http.StatusNotFound)
+		if errors.Is(err, utils.ErrForbidden) {
+			utils.RespondWithError(w, fmt.Sprintf("Error: %s", err.Error()), http.StatusForbidden)
 			return
 		}
-		http.Error(w, fmt.Sprintf("Failed to retrieve notification: %s", err.Error()), http.StatusInternalServerError)
+		if errors.Is(err, utils.ErrNotFound) {
+			utils.RespondWithError(w, fmt.Sprintf("Error: notification with ID: %d was not found", ID), http.StatusNotFound)
+			return
+		}
+		utils.RespondWithError(w, fmt.Sprintf("Error: %s", err.Error()), http.StatusInternalServerError)
 		return
 	}
+
+	response := models.UserResponse{
+		Code:    http.StatusOK,
+		Message: fmt.Sprintf("User with ID: %d was successfully deleted", ID),
+	}
+
+	// Encode and write JSON response
+	json.NewEncoder(w).Encode(response)
 }

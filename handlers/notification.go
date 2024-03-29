@@ -40,7 +40,7 @@ func (h *NotificationHandler) CreateNotification(w http.ResponseWriter, r *http.
 	// Extract user ID from JWT token
 	token, err := utils.GetToken(r)
 	if err != nil {
-		utils.RespondWithError(w, "Unauthorized access", http.StatusUnauthorized)
+		utils.RespondWithError(w, "Error: unauthorized access", http.StatusUnauthorized)
 		return
 	}
 	claims := token.Claims.(jwt.MapClaims)
@@ -51,7 +51,7 @@ func (h *NotificationHandler) CreateNotification(w http.ResponseWriter, r *http.
 	// Check and resolve errors during JSON decoding process
 	err = json.NewDecoder(r.Body).Decode(&notificationInput)
 	if err != nil {
-		http.Error(w, "Failed to parse request body", http.StatusBadRequest)
+		utils.RespondWithError(w, "Error: failed to parse request body", http.StatusBadRequest)
 		return
 	}
 
@@ -62,12 +62,18 @@ func (h *NotificationHandler) CreateNotification(w http.ResponseWriter, r *http.
 			utils.RespondWithError(w, err.Error(), http.StatusBadRequest)
 			return
 		}
-		http.Error(w, fmt.Sprintf("Failed to create notification: %s", err.Error()), http.StatusInternalServerError)
+		utils.RespondWithError(w, fmt.Sprintf("Error: failed to create notification: %s", err.Error()), http.StatusInternalServerError)
 		return
+	}
+
+	response := models.NotificationResponse{
+		Code:    http.StatusCreated,
+		Message: "Notification was successfully created",
 	}
 
 	// Write response header
 	w.WriteHeader(http.StatusCreated)
+	json.NewEncoder(w).Encode(response)
 }
 
 func (h *NotificationHandler) GetNotificationByID(w http.ResponseWriter, r *http.Request) {
@@ -76,28 +82,34 @@ func (h *NotificationHandler) GetNotificationByID(w http.ResponseWriter, r *http
 	vars := mux.Vars(r)
 
 	// Convert string to integer
-	id, err := strconv.ParseInt(vars["id"], 10, 64)
+	ID, err := strconv.ParseInt(vars["id"], 10, 64)
 
 	// Check and resolve errors arising from string conversion
 	if err != nil {
-		http.Error(w, "Invalid notification ID", http.StatusBadRequest)
+		utils.RespondWithError(w, "Error: invalid notification ID", http.StatusBadRequest)
 		return
 	}
 
-	notification, err := h.notificationService.GetNotificationByID(id)
+	notification, err := h.notificationService.GetNotificationByID(ID)
 
 	// Check and resolve errors from get notification by id service
 	if err != nil {
 		if errors.Is(err, utils.ErrNotFound) {
-			http.Error(w, fmt.Sprintf("Notification with id: %d was not found", id), http.StatusNotFound)
+			utils.RespondWithError(w, fmt.Sprintf("Error: notification with id: %d was not found", ID), http.StatusNotFound)
 			return
 		}
-		http.Error(w, fmt.Sprintf("Failed to retrieve notification: %s", err.Error()), http.StatusInternalServerError)
+		utils.RespondWithError(w, fmt.Sprintf("Error: failed to retrieve notification: %s", err.Error()), http.StatusInternalServerError)
 		return
 	}
 
+	response := models.NotificationResponse{
+		Code:    http.StatusOK,
+		Data:    notification,
+		Message: fmt.Sprintf("Notification with ID: %d was successfully retrieved", ID),
+	}
+
 	// Encode and write JSON response
-	json.NewEncoder(w).Encode(notification)
+	json.NewEncoder(w).Encode(response)
 }
 
 func (h *NotificationHandler) GetAllNotifications(w http.ResponseWriter, r *http.Request) {
@@ -119,12 +131,18 @@ func (h *NotificationHandler) GetAllNotifications(w http.ResponseWriter, r *http
 
 	// Check and resolve errors from get all notifications service
 	if err != nil {
-		http.Error(w, fmt.Sprintf("Failed to retrieve notification: %s", err.Error()), http.StatusInternalServerError)
+		utils.RespondWithError(w, fmt.Sprintf("Error: failed to retrieve notification: %s", err.Error()), http.StatusInternalServerError)
 		return
 	}
 
+	response := models.NotificationResponse{
+		Code:    http.StatusOK,
+		Data:    notifications,
+		Message: "Notifications successfully retrieved.",
+	}
+
 	// Encode and write JSON response
-	json.NewEncoder(w).Encode(notifications)
+	json.NewEncoder(w).Encode(response)
 }
 
 func (h *NotificationHandler) UpdateNotificationByID(w http.ResponseWriter, r *http.Request) {
@@ -137,14 +155,14 @@ func (h *NotificationHandler) UpdateNotificationByID(w http.ResponseWriter, r *h
 
 	// Check and resolve errors arising from string conversion
 	if err != nil {
-		http.Error(w, "Invalid notification ID", http.StatusBadRequest)
+		utils.RespondWithError(w, "Error: invalid notification ID", http.StatusBadRequest)
 		return
 	}
 
 	// Extract user ID from JWT token
 	token, err := utils.GetToken(r)
 	if err != nil {
-		utils.RespondWithError(w, "Unauthorized access", http.StatusUnauthorized)
+		utils.RespondWithError(w, "Error: unauthorized access", http.StatusUnauthorized)
 		return
 	}
 	claims := token.Claims.(jwt.MapClaims)
@@ -155,7 +173,7 @@ func (h *NotificationHandler) UpdateNotificationByID(w http.ResponseWriter, r *h
 	// Check and resolve errors during JSON decoding process
 	err = json.NewDecoder(r.Body).Decode(&fields)
 	if err != nil {
-		http.Error(w, "Failed to parse request body", http.StatusBadRequest)
+		utils.RespondWithError(w, "Error: failed to parse request body", http.StatusBadRequest)
 		return
 	}
 
@@ -164,20 +182,28 @@ func (h *NotificationHandler) UpdateNotificationByID(w http.ResponseWriter, r *h
 	// Check and resolve errors from get notification by id service
 	if err != nil {
 		if errors.Is(err, utils.ErrNotFound) {
-			http.Error(w, fmt.Sprintf("Notification with id: %d was not found", ID), http.StatusNotFound)
+			utils.RespondWithError(w, fmt.Sprintf("Error: notification with id: %d was not found", ID), http.StatusNotFound)
 			return
 		}
 		if errors.Is(err, utils.ErrInvalidTypeForPriority) {
-			utils.RespondWithError(w, err.Error(), http.StatusBadRequest)
+			utils.RespondWithError(w, fmt.Sprintf("Error: %s", err.Error()), http.StatusBadRequest)
 			return
 		}
 		if errors.Is(err, utils.ErrInvalidRangeForPriority) {
-			utils.RespondWithError(w, err.Error(), http.StatusBadRequest)
+			utils.RespondWithError(w, fmt.Sprintf("Error: %s", err.Error()), http.StatusBadRequest)
 			return
 		}
-		http.Error(w, fmt.Sprintf("Failed to retrieve notification: %s", err.Error()), http.StatusInternalServerError)
+		utils.RespondWithError(w, fmt.Sprintf("Error: %s", err.Error()), http.StatusInternalServerError)
 		return
 	}
+
+	response := models.NotificationResponse{
+		Code:    http.StatusOK,
+		Message: fmt.Sprintf("Notification with ID: %d was successfully updated", ID),
+	}
+
+	// Encode and write JSON response
+	json.NewEncoder(w).Encode(response)
 }
 
 func (h *NotificationHandler) DeleteNotificationByID(w http.ResponseWriter, r *http.Request) {
@@ -190,14 +216,14 @@ func (h *NotificationHandler) DeleteNotificationByID(w http.ResponseWriter, r *h
 
 	// Check and resolve errors arising from string conversion
 	if err != nil {
-		http.Error(w, "Invalid notification ID", http.StatusBadRequest)
+		utils.RespondWithError(w, "Error: invalid notification ID", http.StatusBadRequest)
 		return
 	}
 
 	// Extract user ID from JWT token
 	token, err := utils.GetToken(r)
 	if err != nil {
-		utils.RespondWithError(w, "Unauthorized access", http.StatusUnauthorized)
+		utils.RespondWithError(w, "Error: unauthorized access", http.StatusUnauthorized)
 		return
 	}
 	claims := token.Claims.(jwt.MapClaims)
@@ -208,10 +234,18 @@ func (h *NotificationHandler) DeleteNotificationByID(w http.ResponseWriter, r *h
 	// Check and resolve errors from get notification by id service
 	if err != nil {
 		if errors.Is(err, utils.ErrNotFound) {
-			http.Error(w, fmt.Sprintf("Notification with id: %d was not found", ID), http.StatusNotFound)
+			utils.RespondWithError(w, fmt.Sprintf("Error: notification with id: %d was not found", ID), http.StatusNotFound)
 			return
 		}
-		http.Error(w, fmt.Sprintf("Failed to retrieve notification: %s", err.Error()), http.StatusInternalServerError)
+		utils.RespondWithError(w, fmt.Sprintf("Error: %s", err.Error()), http.StatusInternalServerError)
 		return
 	}
+
+	response := models.NotificationResponse{
+		Code:    http.StatusOK,
+		Message: fmt.Sprintf("Notification with ID: %d was successfully deleted", ID),
+	}
+
+	// Encode and write JSON response
+	json.NewEncoder(w).Encode(response)
 }

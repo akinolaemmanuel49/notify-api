@@ -31,3 +31,9 @@ type UserInputWithPassword struct {
 	Email     string `json:"email"`
 	Password  string `json:"password"`
 }
+
+type UserResponse struct {
+	Code    int         `json:"code"`
+	Data    interface{} `json:"data,omitempty"`
+	Message string      `json:"message,omitempty"`
+}

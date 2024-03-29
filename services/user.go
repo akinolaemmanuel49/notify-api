@@ -3,6 +3,7 @@ package services
 import (
 	"github.com/akinolaemmanuel49/notify-api/models"
 	"github.com/akinolaemmanuel49/notify-api/repositories"
+	"github.com/akinolaemmanuel49/notify-api/utils"
 )
 
 type UserService struct {
@@ -47,16 +48,24 @@ func (s *UserService) GetAllUsers(page, pageSize int) ([]*models.UserProfile, er
 	return users, nil
 }
 
-func (s *UserService) UpdateUserByID(id int64, fields map[string]interface{}) error {
-	err := s.userRepository.UpdateUserByID(id, fields)
+func (s *UserService) UpdateUserByID(ID, claimsID int64, fields map[string]interface{}) error {
+	if claimsID != ID {
+		// utils.RespondWithError(w, "You are not permitted to modify this resource", http.StatusForbidden)
+		return utils.ErrForbidden
+	}
+	err := s.userRepository.UpdateUserByID(ID, fields)
 	if err != nil {
 		return err
 	}
 	return nil
 }
 
-func (s *UserService) DeleteUserByID(id int64) error {
-	err := s.userRepository.DeleteUserByID(id)
+func (s *UserService) DeleteUserByID(ID, claimsID int64) error {
+	if claimsID != ID {
+		// utils.RespondWithError(w, "You are not permitted to modify this resource", http.StatusForbidden)
+		return utils.ErrForbidden
+	}
+	err := s.userRepository.DeleteUserByID(ID)
 	if err != nil {
 		return err
 	}
