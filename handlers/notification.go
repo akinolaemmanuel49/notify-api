@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"log"
 	"net/http"
 	"strconv"
 
@@ -25,7 +26,7 @@ func NewNotificationHandler(notificationService *services.NotificationService) *
 }
 
 func (h *NotificationHandler) NotificationHealthCheck(w http.ResponseWriter, r *http.Request) {
-	fmt.Println("Endpoint Hit: Notifications HealthCheck")
+	log.Println("Endpoint Hit: Notifications HealthCheck")
 
 	// Set response content type to JSON
 	w.Header().Set("Content-Type", "application/json")
@@ -35,7 +36,7 @@ func (h *NotificationHandler) NotificationHealthCheck(w http.ResponseWriter, r *
 }
 
 func (h *NotificationHandler) CreateNotification(w http.ResponseWriter, r *http.Request) {
-	fmt.Println("Endpoint Hit: CreateNotification")
+	log.Println("Endpoint Hit: CreateNotification")
 
 	// Extract user ID from JWT token
 	token, err := utils.GetToken(r)
@@ -77,7 +78,7 @@ func (h *NotificationHandler) CreateNotification(w http.ResponseWriter, r *http.
 }
 
 func (h *NotificationHandler) GetNotificationByID(w http.ResponseWriter, r *http.Request) {
-	fmt.Println("Endpoint Hit: GetNotificationByID")
+	log.Println("Endpoint Hit: GetNotificationByID")
 
 	vars := mux.Vars(r)
 
@@ -112,8 +113,50 @@ func (h *NotificationHandler) GetNotificationByID(w http.ResponseWriter, r *http
 	json.NewEncoder(w).Encode(response)
 }
 
+func (h *NotificationHandler) GetOwnNotifications(w http.ResponseWriter, r *http.Request) {
+	log.Println("Endpoint Hit: GetOwnNotifications")
+
+	// Extract user ID from JWT token
+	token, err := utils.GetToken(r)
+	if err != nil {
+		utils.RespondWithError(w, "Error: unauthorized access", http.StatusUnauthorized)
+		return
+	}
+	claims := token.Claims.(jwt.MapClaims)
+	publisherID := int64(claims["id"].(float64))
+
+	// Check the page query in the url, convert it to an integer, resolve errors
+	page, err := strconv.Atoi(r.URL.Query().Get("page"))
+	if err != nil || page < 1 {
+		page = 1
+	}
+
+	// Check the pageSize query in the url, convert it to an integer, resolve errors
+	pageSize, err := strconv.Atoi(r.URL.Query().Get("pageSize"))
+	if err != nil || pageSize < 1 {
+		pageSize = 10 // default page size
+	}
+
+	notifications, err := h.notificationService.GetOwnNotifications(publisherID, page, pageSize)
+
+	// Check and resolve errors from get all notifications service
+	if err != nil {
+		utils.RespondWithError(w, fmt.Sprintf("Error: failed to retrieve notification: %s", err.Error()), http.StatusInternalServerError)
+		return
+	}
+
+	response := models.NotificationResponse{
+		Code:    http.StatusOK,
+		Data:    notifications,
+		Message: "Notifications successfully retrieved.",
+	}
+
+	// Encode and write JSON response
+	json.NewEncoder(w).Encode(response)
+}
+
 func (h *NotificationHandler) GetAllNotifications(w http.ResponseWriter, r *http.Request) {
-	fmt.Println("Endpoint Hit: GetAllNotifications")
+	log.Println("Endpoint Hit: GetAllNotifications")
 
 	// Check the page query in the url, convert it to an integer, resolve errors
 	page, err := strconv.Atoi(r.URL.Query().Get("page"))
@@ -146,7 +189,7 @@ func (h *NotificationHandler) GetAllNotifications(w http.ResponseWriter, r *http
 }
 
 func (h *NotificationHandler) UpdateNotificationByID(w http.ResponseWriter, r *http.Request) {
-	fmt.Println("Endpoint Hit: UpdateNotificationByID")
+	log.Println("Endpoint Hit: UpdateNotificationByID")
 
 	vars := mux.Vars(r)
 
@@ -207,7 +250,7 @@ func (h *NotificationHandler) UpdateNotificationByID(w http.ResponseWriter, r *h
 }
 
 func (h *NotificationHandler) DeleteNotificationByID(w http.ResponseWriter, r *http.Request) {
-	fmt.Println("Endpoint Hit: DeleteNotificationByID")
+	log.Println("Endpoint Hit: DeleteNotificationByID")
 
 	vars := mux.Vars(r)
 

@@ -7,6 +7,7 @@ The Notify API is a web API built using the Go programming language with the `ne
 ### Notifications Resource
 
 - `GET /notifications`: Retrieve all notifications.
+- `GET /notifications/me`: Retrieve all notifications by current user.
 - `GET /notifications/{id}`: Retrieve a specific notification by ID.
 - `POST /notifications`: Create a new notification.
 - `PUT /notifications/{id}`: Update an existing notification.

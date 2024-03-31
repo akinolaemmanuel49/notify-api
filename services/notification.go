@@ -34,6 +34,14 @@ func (s *NotificationService) GetNotificationByID(id int64) (*models.Notificatio
 	return notification, nil
 }
 
+func (s *NotificationService) GetOwnNotifications(ID int64, page, pageSize int) ([]*models.Notification, error) {
+	notifications, err := s.notificationRepository.GetOwnNotifications(ID, page, pageSize)
+	if err != nil {
+		return nil, err
+	}
+	return notifications, nil
+}
+
 func (s *NotificationService) GetAllNotifications(page, pageSize int) ([]*models.Notification, error) {
 	notifications, err := s.notificationRepository.GetAllNotifications(page, pageSize)
 	if err != nil {

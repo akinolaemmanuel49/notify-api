@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"log"
 	"net/http"
 	"strconv"
 
@@ -25,7 +26,7 @@ func NewUserHandler(userService *services.UserService) *UserHandler {
 }
 
 func (h *UserHandler) UserHealthCheck(w http.ResponseWriter, r *http.Request) {
-	fmt.Println("Endpoint Hit: Users HealthCheck")
+	log.Println("Endpoint Hit: Users HealthCheck")
 
 	// Set response content type to JSON
 	w.Header().Set("Content-Type", "application/json")
@@ -35,7 +36,7 @@ func (h *UserHandler) UserHealthCheck(w http.ResponseWriter, r *http.Request) {
 }
 
 func (h *UserHandler) CreateUser(w http.ResponseWriter, r *http.Request) {
-	fmt.Println("Endpoint Hit: CreateUser")
+	log.Println("Endpoint Hit: CreateUser")
 
 	var userInputWithPassword models.UserInputWithPassword
 
@@ -68,7 +69,7 @@ func (h *UserHandler) CreateUser(w http.ResponseWriter, r *http.Request) {
 }
 
 func (h *UserHandler) GetUserByID(w http.ResponseWriter, r *http.Request) {
-	fmt.Println("Endpoint Hit: GetUserByID")
+	log.Println("Endpoint Hit: GetUserByID")
 
 	vars := mux.Vars(r)
 
@@ -100,7 +101,7 @@ func (h *UserHandler) GetUserByID(w http.ResponseWriter, r *http.Request) {
 }
 
 func (h *UserHandler) GetAllUsers(w http.ResponseWriter, r *http.Request) {
-	fmt.Println("Endpoint Hit: GetAllUsers")
+	log.Println("Endpoint Hit: GetAllUsers")
 
 	page, err := strconv.Atoi(r.URL.Query().Get("page"))
 	if err != nil || page < 1 {
@@ -129,7 +130,7 @@ func (h *UserHandler) GetAllUsers(w http.ResponseWriter, r *http.Request) {
 }
 
 func (h *UserHandler) UpdateUserByID(w http.ResponseWriter, r *http.Request) {
-	fmt.Println("Endpoint Hit: UpdateUserByID")
+	log.Println("Endpoint Hit: UpdateUserByID")
 
 	vars := mux.Vars(r)
 
@@ -186,7 +187,7 @@ func (h *UserHandler) UpdateUserByID(w http.ResponseWriter, r *http.Request) {
 }
 
 func (h *UserHandler) DeleteUserByID(w http.ResponseWriter, r *http.Request) {
-	fmt.Println("Endpoint Hit: DeleteUserByID")
+	log.Println("Endpoint Hit: DeleteUserByID")
 
 	vars := mux.Vars(r)
 

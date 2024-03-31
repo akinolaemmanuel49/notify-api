@@ -7,7 +7,7 @@ This Makefile provides commands for building, running, and managing a Go applica
 - `make`: Builds and runs the Go application by default.
 - `make build`: Compiles the Go application into an executable.
 - `make run`: Starts the Go application.
-- `make stop`: Stops the Go application.
+- `make stop`: Forcefully stops the Go application.
 - `make start-nginx`: Starts NGINX with a specified configuration file.
 - `make stop-nginx`: Stops NGINX.
 - `make restart-nginx`: Restarts NGINX.

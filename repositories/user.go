@@ -73,6 +73,7 @@ func (r *UserRepository) GetUserByID(id int64) (*models.UserProfile, error) {
 	err := result.Scan(&userProfile.ID, &userProfile.FirstName, &userProfile.LastName, &userProfile.Email, &userProfile.CreatedAt, &userProfile.UpdatedAt)
 	if err != nil {
 		if errors.Is(err, sql.ErrNoRows) {
+			log.Println("Error retrieving user:", err)
 			return nil, utils.ErrNotFound
 		}
 		log.Println("Error retrieving user:", err)
@@ -119,6 +120,7 @@ func (r *UserRepository) GetAllUsers(page, pageSize int) ([]*models.UserProfile,
 func (r *UserRepository) UpdateUserByID(id int64, fields map[string]interface{}) error {
 	_, err := r.GetUserByID(id)
 	if errors.Is(err, utils.ErrNotFound) {
+		log.Println("Error updating user:", err)
 		return utils.ErrNotFound
 	}
 
@@ -147,7 +149,7 @@ func (r *UserRepository) UpdateUserByID(id int64, fields map[string]interface{})
 
 	_, err = r.db.Exec(query, params...)
 	if err != nil {
-		log.Println("Error updating notification: ", err)
+		log.Println("Error updating user: ", err)
 	}
 	return err
 }
@@ -159,12 +161,12 @@ func (r *UserRepository) DeleteUserByID(id int64) error {
 	}
 
 	query := `
-	DELETE FROM notifications WHERE id = ($1)`
+	DELETE FROM users WHERE id = ($1)`
 
 	_, err = r.db.Exec(query, id)
 
 	if err != nil {
-		log.Println("Error deleting notification: ", err)
+		log.Println("Error deleting user: ", err)
 	}
 	return err
 }

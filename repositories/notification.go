@@ -59,7 +59,7 @@ func (r *NotificationRepository) CreateNotification(notificationInput *models.No
 }
 
 // GetNotificationByID retrieves a notification by its ID from the database.
-func (r *NotificationRepository) GetNotificationByID(id int64) (*models.Notification, error) {
+func (r *NotificationRepository) GetNotificationByID(ID int64) (*models.Notification, error) {
 	query := `
 	SELECT 
 		id, 
@@ -71,18 +71,55 @@ func (r *NotificationRepository) GetNotificationByID(id int64) (*models.Notifica
 		updated_at 
 	FROM notifications WHERE id = ($1)`
 
-	result := r.db.QueryRow(query, id)
+	result := r.db.QueryRow(query, ID)
 
 	var notification models.Notification
 	err := result.Scan(&notification.ID, &notification.Title, &notification.Message, &notification.Priority, &notification.PublisherID, &notification.CreatedAt, &notification.UpdatedAt)
 	if err != nil {
 		if errors.Is(err, sql.ErrNoRows) {
+			log.Println("Error retrieving notification:", err)
 			return nil, utils.ErrNotFound
 		}
 		log.Println("Error retrieving notification:", err)
 		return nil, err
 	}
+	log.Println("Retrieving notification with ID: ", ID)
 	return &notification, nil
+}
+
+// GetOwnNotifications retrieves all notifications from the database that belong to a specific publisher with pagination.
+func (r *NotificationRepository) GetOwnNotifications(ID int64, page, pageSize int) ([]*models.Notification, error) {
+	if page < 1 {
+		page = 1
+	}
+	offset := (page - 1) * pageSize
+	query := `
+	SELECT id, title, message, priority, publisher_id, created_at, updated_at 
+	FROM notifications WHERE publisher_id = $1 
+	LIMIT $2 OFFSET $3`
+	results, err := r.db.Query(query, ID, pageSize, offset)
+	if err != nil {
+		log.Println("Error retrieving notifications:", err)
+		return nil, err
+	}
+	defer results.Close()
+
+	notifications := []*models.Notification{}
+	for results.Next() {
+		var notification models.Notification
+		err := results.Scan(&notification.ID, &notification.Title, &notification.Message, &notification.Priority, &notification.PublisherID, &notification.CreatedAt, &notification.UpdatedAt)
+		if err != nil {
+			log.Println("Error scanning notification row:", err)
+			return nil, err
+		}
+		notifications = append(notifications, &notification)
+	}
+	if err := results.Err(); err != nil {
+		log.Println("Error iterating over notification rows:", err)
+		return nil, err
+	}
+	log.Println("Retrieving notifications")
+	return notifications, nil
 }
 
 // GetAllNotifications retrieves all notifications from the database with pagination.
@@ -114,12 +151,14 @@ func (r *NotificationRepository) GetAllNotifications(page, pageSize int) ([]*mod
 		log.Println("Error iterating over notification rows:", err)
 		return nil, err
 	}
+	log.Println("Retrieving notifications")
 	return notifications, nil
 }
 
 func (r *NotificationRepository) UpdateNotificationByID(ID, publisherID int64, fields map[string]interface{}) error {
 	_, err := r.GetNotificationByID(ID)
 	if errors.Is(err, utils.ErrNotFound) {
+		log.Println("Error retrieving notification:", err)
 		return utils.ErrNotFound
 	}
 

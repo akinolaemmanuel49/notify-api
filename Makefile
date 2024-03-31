@@ -8,10 +8,11 @@ build:
 
 run:
 	@echo "Starting Go application..."
+	@echo "Use Ctrl+C to gracefully shutdown..."
 	.\notify-api.exe &
 
 stop:
-	@echo "Stopping Go application..."
+	@echo "Forcefully stopping Go application..."
 	taskkill /F /IM notify-api.exe
 
 start-nginx:

@@ -294,6 +294,42 @@ type UserResponse struct {
     }
     ```
 
+###### Get Own Notifications
+- **Endpoint:** `/notifications/me`
+- **Method:** GET
+- **Description:** Retrieves all notifications by the current user.
+- **Access:** Protected
+- **Query Parameters:**
+  - `page` (optional): Specifies the page number for pagination. Default is 1.
+  - `pageSize` (optional): Specifies the number of notifications per page. Default is 10.
+- **Sample Response:**
+    ```json
+    {
+	"code": 200,
+	"data": [
+		{
+			"id": 4,
+			"title": "New Notification Title 4",
+			"message": "This is a sample notification message 4.",
+			"priority": 1,
+			"publisher_id": 1,
+			"created_at": "2024-03-26T10:00:00+01:00",
+			"updated_at": "2024-03-26T10:00:00+01:00"
+		},
+		{
+			"id": 3,
+			"title": "New Notification Title 3",
+			"message": "This is a sample notification message 3.",
+			"priority": 1,
+			"publisher_id": 1,
+			"created_at": "2024-03-26T10:00:00+01:00",
+			"updated_at": "2024-03-26T10:00:00+01:00"
+		},
+	],
+	"message": "Notifications successfully retrieved."
+    }
+    ```
+
 #### Error Handling
 - The API follows standard HTTP status codes for error handling.
 - Detailed error messages are provided in the response body for better understanding of issues.
